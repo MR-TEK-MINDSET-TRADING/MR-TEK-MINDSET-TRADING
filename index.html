@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src https://zohgwjzwwdgaiwsrvljw.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'self'; style-src 'unsafe-inline'; img-src 'self' data: blob:; manifest-src 'self'; worker-src 'self'; connect-src https://zohgwjzwwdgaiwsrvljw.supabase.co; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
 <meta name="referrer" content="no-referrer">
 <title>TEK MINDSET TRADING</title>
 <style>
@@ -23,7 +23,15 @@ table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}th,t
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}.msg{padding:10px;border-radius:8px;margin-bottom:12px;background:#0f3a2c}.msg.e{background:#4a1a1d}
 @media(max-width:800px){body{display:block}aside{width:auto;height:auto;position:static;padding:10px}nav{display:flex;overflow-x:auto;gap:4px}nav a{white-space:nowrap}.logo{padding-bottom:8px}main{padding:14px}}
 @media print{aside,.row,button{display:none}body{background:#fff;color:#000}.card{border-color:#ccc;background:#fff}}
-</style></head><body>
+</style>
+<meta name="theme-color" content="#0a0c0d">
+<meta name="application-name" content="MR TEK MINDSET TRADING">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+</head><body>
 <aside><div class="logo">TEK MINDSET<small>TRADING</small></div><nav id="nav"></nav></aside><main id="main"></main>
 <script>
 //CORE
@@ -185,4 +193,12 @@ return{set:{name:String(d.set?.name||"").slice(0,80)},accts:AS,cur:ids.has(d.cur
 function imp(fl){if(!fl)return;if(fl.size>5e6){MSG="Fichier trop volumineux.";MSGE=true;return render()}const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||typeof d!=="object"||!d.set||!Array.isArray(d.trades))throw 0;S=clean(d);save();MSG="Sauvegarde restaurée ("+S.trades.length+" trades).";render()}catch(x){MSG="Fichier invalide.";MSGE=true;render()}};r.readAsText(fl)}
 document.addEventListener&&document.addEventListener("visibilitychange",()=>{if(document.visibilityState=="hidden"&&PEND){clearTimeout(TM);saveNow()}});
 boot();
-</script></body></html>
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err => console.warn("Service worker:", err));
+  });
+}
+</script>
+</body></html>

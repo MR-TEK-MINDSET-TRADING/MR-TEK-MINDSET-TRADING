@@ -1,0 +1,11 @@
+MR TEK MINDSET TRADING — fichiers PWA
+
+Dans le dépôt GitHub MR-TEK-MINDSET-TRADING, ajoutez/remplacez à la racine :
+- index.html
+- manifest.webmanifest
+- sw.js
+et ajoutez le dossier icons/ avec icon-192.png et icon-512.png.
+
+Conservez le dépôt public et GitHub Pages activé sur la branche main, dossier /(root).
+L'application doit être servie en HTTPS. Après publication, ouvrez l'adresse Pages dans Chrome.
+Le service worker met en cache l'interface, mais la connexion et la synchronisation Supabase nécessitent Internet.
