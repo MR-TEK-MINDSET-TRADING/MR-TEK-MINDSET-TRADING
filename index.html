@@ -128,6 +128,18 @@ td,th{border-bottom-color:#203653}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
+
+
+/* Ajustements de fiabilité et de confort mobile */
+@media(max-width:600px){
+  button{min-height:42px;padding:10px 13px}
+  input,select,textarea{min-height:42px;font-size:16px}
+  .f{grid-template-columns:minmax(0,1fr)}
+  table{font-size:12px}
+  .card{overflow-x:auto}
+  img{max-width:100%;height:auto}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
 <meta name="theme-color" content="#0a0c0d">
 <meta name="application-name" content="MR TEK MINDSET TRADING">
@@ -179,13 +191,18 @@ let REFRESHING=null;async function refresh(){if(!A||!A.refresh_token)throw new E
 function save(){SY="Enregistrement…";PEND=true;try{localStorage.setItem("tmt_d_"+A.user.id,JSON.stringify({ts:Date.now(),d:S}))}catch(x){}clearTimeout(TM);TM=setTimeout(saveNow,500)}
 async function saveNow(){if(!A)return;PEND=false;try{await api("/rest/v1/journals?on_conflict=user_id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:{user_id:A.user.id,data:S,updated_at:new Date().toISOString()}});SY="● Synchronisé";if(!PEND){try{localStorage.removeItem("tmt_d_"+A.user.id)}catch(x){}}}catch(x){SY="⚠ Sauvegarde en échec";PEND=true;clearTimeout(TM);TM=setTimeout(saveNow,5000)}const q=$("#sync"),q2=$("#sync2");if(q)q.textContent=SY;if(q2){q2.textContent=SY;q2.className="s "+(SY.startsWith("⚠")?"r":"m")}}
 async function enter(){if(!A.user)A.user=await api("/auth/v1/user");try{localStorage.setItem("tmt_s",JSON.stringify(A))}catch(x){}
-try{await api("/rest/v1/rpc/touch_login",{method:"POST",body:{}})}catch(x){}
 let dirty=null;try{dirty=JSON.parse(localStorage.getItem("tmt_d_"+A.user.id)||"null")}catch(x){}
-const j=await api("/rest/v1/journals?user_id=eq."+A.user.id+"&select=data,updated_at");
-const useLocal=dirty&&dirty.d&&(!j.length||new Date(j[0].updated_at).getTime()<dirty.ts);
-if(useLocal)S=clean(dirty.d);else if(j.length)S=clean(j[0].data);else S=newS((A.user.user_metadata&&A.user.user_metadata.name)||"");
-if(useLocal||!j.length)await saveNow();
-SY="● Synchronisé";ADM=null;location.hash="#dash"}
+try{await api("/rest/v1/rpc/touch_login",{method:"POST",body:{}})}catch(x){}
+try{
+ const j=await api("/rest/v1/journals?user_id=eq."+A.user.id+"&select=data,updated_at");
+ const useLocal=dirty&&dirty.d&&(!j.length||new Date(j[0].updated_at).getTime()<dirty.ts);
+ if(useLocal)S=clean(dirty.d);else if(j.length)S=clean(j[0].data);else S=newS((A.user.user_metadata&&A.user.user_metadata.name)||"");
+ if(useLocal||!j.length)await saveNow();
+ SY="● Synchronisé";
+}catch(x){
+ if(dirty&&dirty.d){S=clean(dirty.d);SY="⚠ Mode hors ligne — données locales";}else{S=newS((A.user.user_metadata&&A.user.user_metadata.name)||"");SY="⚠ Hors ligne — aucune sauvegarde locale trouvée";}
+}
+ADM=null;location.hash="#dash"}
 const msg=(t,er)=>{AMSG=t;AERR=!!er};
 const tr=m=>/token|otp/i.test(m)&&/expired|invalid/i.test(m)?"Code invalide ou expiré.":/signups not allowed|user not found/i.test(m)?"Aucun compte avec cet e-mail.":/Invalid login/i.test(m)?"E-mail ou mot de passe incorrect.":/not confirmed/i.test(m)?"E-mail non confirmé : ouvrez le message de confirmation reçu.":/already registered|already been registered/i.test(m)?"Cet e-mail est déjà inscrit.":/rate limit|too many/i.test(m)?"Trop de tentatives, réessayez dans quelques minutes.":/Failed to fetch|NetworkError/i.test(m)?"Connexion internet impossible.":m;
 function sw(m){AM=m;AMSG="";CS=0;CT="email";render()}
@@ -249,7 +266,9 @@ set(){const a=AC(),ty=(sel)=>TYPES.map(t=>`<option ${sel==t?"selected":""}>${t}<
 <div class="card" style="margin-bottom:14px"><h3>Compte actif</h3><div class="f"><div><label>Nom</label><input id="s_nm" maxlength="40" value="${e(a.name)}"></div><div><label>Type</label><select id="s_ty">${ty(a.type)}</select></div><div><label>Capital initial ($)</label><input id="s_cap" type="number" step="any" min="0" value="${a.cap}"></div></div><p class="m s">Modifier le capital recalcule automatiquement le solde et les statistiques de ce compte.</p><div class="row"><button onclick="saveSet()">Enregistrer</button>${S.accts.length>1?`<button class="${DEL=="acct"?"d":"o"}" onclick="delAcct()">${DEL=="acct"?"Confirmer la suppression ?":"Supprimer ce compte"}</button>`:""}</div></div>
 <div class="card" style="margin-bottom:14px"><h3>Créer un nouveau compte</h3><div class="f"><div><label>Nom</label><input id="n_nm" maxlength="40" placeholder="Ex. Compte 500 $"></div><div><label>Type</label><select id="n_ty">${ty("Démo")}</select></div><div><label>Capital initial ($)</label><input id="n_cap" type="number" step="any" min="0" value="100"></div></div><div class="row"><button onclick="addAcct()">Créer et activer</button></div></div>
 <div class="card"><h3>Tous mes comptes</h3><table><tr><th>Nom</th><th>Type</th><th>Capital</th><th>Solde</th><th>Trades</th><th></th></tr>${S.accts.map(x=>{const q=stats({set:{cap:x.cap},trades:S.trades.filter(t=>t.acct==x.id)});return`<tr><td>${e(x.name)}${x.id==S.cur?" ✓":""}</td><td>${x.type}</td><td>${f(x.cap)}</td><td class="${cl(q.bal-x.cap)}">${f(q.bal)}</td><td>${q.n}</td><td>${x.id==S.cur?"":`<button class="o x" onclick="swAcct('${x.id}')">Activer</button>`}</td></tr>`}).join("")}</table><div class="row"><button class="${DEL=="all"?"d":"o"}" onclick="resetAll()">${DEL=="all"?"Confirmer l’effacement ?":"Effacer toutes mes données"}</button></div></div>`},
-prof(){return`<h1>Mon profil</h1>${MSG?`<div class="msg">${e(MSG)}</div>`:""}<div class="card"><div class="f"><div><label>Nom affiché</label><input id="p_name" value="${e(S.set.name)}"></div></div><div class="row"><button onclick="S.set.name=$('#p_name').value.trim().slice(0,80);save();MSG='Profil enregistré.';render()">Enregistrer</button></div><p class="m s" style="margin-top:14px">Connecté : ${e(A&&A.user?A.user.email:"")}<br>Vos données sont enregistrées dans votre compte privé.</p><div class="row"><button class="o" onclick="logout()">Se déconnecter</button></div></div>`}};
+prof(){const locked=!!String(S.set.name||"").trim();return`<h1>Mon profil</h1>${MSG?`<div class="msg">${e(MSG)}</div>`:""}<div class="card"><div class="f"><div><label>Nom affiché ${locked?"· verrouillé après enregistrement":"· à définir"}</label><input id="p_name" maxlength="80" value="${e(S.set.name)}" ${locked?"readonly":""} placeholder="Votre nom affiché"></div></div><div class="row">${locked?`<button class="o" onclick="changeProfileName()">Modifier avec confirmation</button>`:`<button onclick="saveProfileName()">Enregistrer et verrouiller le nom</button>`}</div><p class="m s" style="margin-top:14px">Après le premier enregistrement, le nom est verrouillé dans l’interface pour éviter les changements accidentels. Une confirmation permet de corriger une faute de frappe.</p><p class="m s">Connecté : ${e(A&&A.user?A.user.email:"")}<br>Vos données sont enregistrées dans votre compte privé.</p><div class="row"><button class="o" onclick="logout()">Se déconnecter</button></div></div>`}};
+function saveProfileName(){const n=($("#p_name")?.value||"").trim().slice(0,80);if(!n){MSG="Saisissez un nom avant d’enregistrer.";render();return}S.set.name=n;save();MSG="Nom enregistré et verrouillé.";render()}
+function changeProfileName(){const check=prompt("Pour déverrouiller le nom, saisissez MODIFIER.");if(check!=="MODIFIER"){MSG="Modification annulée.";render();return}const n=prompt("Saisissez le nouveau nom affiché :",S.set.name);if(n===null)return;const cleanName=n.trim().slice(0,80);if(!cleanName){MSG="Le nom ne peut pas être vide.";render();return}if(!confirm("Confirmer le remplacement du nom affiché ?"))return;S.set.name=cleanName;save();MSG="Nom mis à jour et de nouveau verrouillé.";render()}
 async function admLoad(){ADMB=true;try{const[p,j]=await Promise.all([api("/rest/v1/profiles?select=*&order=created_at.desc"),api("/rest/v1/journals?select=user_id,data")]);ADM={p,j:Object.fromEntries(j.map(x=>[x.user_id,x.data]))}}catch(x){ADM={err:x.message}}ADMB=false;render()}
 V.admin=function(){if(!adm())return"<h1>Accès refusé</h1>";if(!ADM){if(!ADMB)admLoad();return`<h1>Administration</h1><p class="m">Chargement…</p>`}if(ADM.err)return`<h1>Administration</h1><div class="msg e">${e(ADM.err)}</div>`;
 let tt=0;const rows=ADM.p.map(p=>{const d=ADM.j[p.id],s=d?(c=>stats({set:{cap:c.accts.reduce((x,a)=>x+a.cap,0)},trades:c.trades}))(clean(d)):null;if(s)tt+=s.n;const dt=x=>x?String(x).slice(0,16).replace("T"," "):"—";return`<tr><td>${e(p.email)}</td><td>${e(p.name||"")}</td><td>${dt(p.created_at)}</td><td>${dt(p.last_login)}</td><td>${p.logins||0}</td><td>${s?s.n:0}</td><td>${s?f(s.bal):"—"}</td><td class="${s?cl(s.net):""}">${s?f(s.net):"—"}</td></tr>`}).join("");
