@@ -1,4 +1,4 @@
-const CACHE_NAME = "mr-tek-mindset-v2";
+const CACHE_NAME = "mr-tek-mindset-v3";
 const APP_FILES = [
   "./",
   "./index.html",
